@@ -6,7 +6,6 @@ application:
   upstreams:
     - location: /
       backend: http://runtime:8080/
-
 services:
   # S3 兼容存储（RustFS），celld 运行时的状态后端。digest 与上游 compose 锁定一致。
   storage:
@@ -26,12 +25,12 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
-
   # celld 应用运行时。上游 compose 的 init sidecar 逻辑（配置生成、存储就绪等待、
   # 应用部署、数据库迁移）合并进 setup_script，在应用启动前完成。
   runtime:
     # ghcr.io/every-app/open-seo-standalone:0.1.31
-    image: ghcr.1ms.run/every-app/open-seo-standalone:0.1.31
+    # upstream: ghcr.io/every-app/open-seo-standalone:v0.1.31
+    image: ghcr.1ms.run/every-app/open-seo-standalone:v0.1.31
     environment:
       - CELLD_BUCKET=openseo
       - S3_ENDPOINT=http://storage:9000
@@ -97,7 +96,6 @@ services:
       timeout: 5s
       start_period: 120s
       retries: 5
-
   # 爬虫网关：从 /config 读取初始化产物，为站点审计提供受控抓取通道。
   crawl-gateway:
     # ghcr.io/every-app/open-seo-standalone:0.1.31
@@ -125,7 +123,6 @@ services:
       - /lzcapp/var/config:/config:ro
     depends_on:
       - runtime
-
 usage: |
   OpenSEO 是 Semrush / Ahrefs 的开源替代：关键词研究、外链分析、排名追踪、
   站点审计与 AI SEO 分析。
