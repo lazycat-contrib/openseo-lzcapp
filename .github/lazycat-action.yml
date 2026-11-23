@@ -28,6 +28,19 @@ images:
       mode: mirror
       require_digest_match: true
 
+  # crawl-gateway 与 runtime 使用同一上游镜像，必须跟随同一版本更新。
+  # 该条目不驱动版本号（version_source 只指向 runtime），仅同步镜像引用。
+  - id: crawl-gateway
+    target: service
+    service: crawl-gateway
+    source: ghcr.io/every-app/open-seo-standalone
+    channel: stable
+    sort: semver
+    tag_regex: '^v?[0-9]+\.[0-9]+\.[0-9]+$'
+    delivery:
+      mode: mirror
+      require_digest_match: true
+
 build:
   run_buildscript: false
   toolchains: []
