@@ -99,7 +99,8 @@ services:
   # 爬虫网关：从 /config 读取初始化产物，为站点审计提供受控抓取通道。
   crawl-gateway:
     # ghcr.io/every-app/open-seo-standalone:0.1.31
-    image: ghcr.1ms.run/every-app/open-seo-standalone:0.1.31
+    # upstream: ghcr.io/every-app/open-seo-standalone:v0.1.31
+    image: ghcr.1ms.run/every-app/open-seo-standalone:v0.1.31
     command: node /opt/standalone/crawl-gateway.mjs
     environment:
       - CELLD_BUCKET=openseo
