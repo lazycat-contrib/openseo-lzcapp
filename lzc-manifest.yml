@@ -1,0 +1,137 @@
+application:
+  subdomain: open-seo
+  multi_instance: false
+  public_path:
+    - /
+  upstreams:
+    - location: /
+      backend: http://runtime:8080/
+
+services:
+  # S3 兼容存储（RustFS），celld 运行时的状态后端。digest 与上游 compose 锁定一致。
+  storage:
+    # rustfs/rustfs:1.0.3
+    image: docker.1ms.run/rustfs/rustfs:1.0.3@sha256:9ca9559533b537d10482fe923288b676ad08f92a7069d9a17327fbae3cab688b
+    environment:
+      - RUSTFS_ACCESS_KEY={{ stable_secret "openseo_storage_access_key" }}
+      - RUSTFS_SECRET_KEY={{ stable_secret "openseo_storage_secret_key" }}
+    binds:
+      - /lzcapp/var/storage:/data
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/health
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # celld 应用运行时。上游 compose 的 init sidecar 逻辑（配置生成、存储就绪等待、
+  # 应用部署、数据库迁移）合并进 setup_script，在应用启动前完成。
+  runtime:
+    # ghcr.io/every-app/open-seo-standalone:0.1.31
+    image: ghcr.1ms.run/every-app/open-seo-standalone:0.1.31
+    environment:
+      - CELLD_BUCKET=openseo
+      - S3_ENDPOINT=http://storage:9000
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID={{ stable_secret "openseo_storage_access_key" }}
+      - AWS_SECRET_ACCESS_KEY={{ stable_secret "openseo_storage_secret_key" }}
+      - CELLD_MAX_RSS_MB=1536
+      - CELLD_MAX_RESIDENT_CELLS=64
+      - CELLD_V8_HEAP_LIMIT_MB=256
+      - CELLD_MAX_REQUEST_BODY_BYTES=33554432
+      - RUST_LOG=warn,cell_console=info
+      - AUTH_MODE=password
+      - BETTER_AUTH_URL=https://open-seo.{{ .S.AppDomain }}
+      - DATAFORSEO_API_KEY={{ .U.dataforseo_api_key }}
+      - TREG_API_TOKEN={{ .U.treg_api_token }}
+      - OPENROUTER_API_KEY={{ .U.openrouter_api_key }}
+      - OPENROUTER_BASE_URL={{ .U.openrouter_base_url }}
+      - OPENROUTER_MODEL={{ .U.openrouter_model }}
+      - GOOGLE_CLIENT_ID={{ .U.google_client_id }}
+      - GOOGLE_CLIENT_SECRET={{ .U.google_client_secret }}
+      - CONTEXT_API_KEY={{ .U.context_api_key }}
+      - GOOGLE_MAPS_API_KEY={{ .U.google_maps_api_key }}
+      - CRAWLER_ACCESS_SECRET={{ .U.crawler_access_secret }}
+    binds:
+      - /lzcapp/var/runtime-data:/data
+      - /lzcapp/var/config:/config
+    mem_limit: 2g
+    depends_on:
+      - storage
+    setup_script: |
+      #!/bin/sh
+      set -eu
+      umask 077
+      EMPTY_SHA256=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+      node /opt/standalone/configure.mjs
+      ready=0
+      for attempt in $(seq 1 90); do
+        if curl -fsS --aws-sigv4 "aws:amz:${AWS_REGION}:s3" --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" -H "x-amz-content-sha256: $EMPTY_SHA256" -I "$S3_ENDPOINT/$CELLD_BUCKET" >/dev/null 2>&1; then ready=1; break; fi
+        sleep 1
+      done
+      [ "$ready" = 1 ] || { echo 'Storage did not become ready' >&2; exit 1; }
+      celld deploy /config/app
+      ready=0
+      for attempt in $(seq 1 90); do
+        if curl -fsS -X POST http://127.0.0.1:8081/reload >/dev/null 2>&1; then ready=1; break; fi
+        sleep 1
+      done
+      [ "$ready" = 1 ] || { echo 'Runtime did not load the deployment' >&2; exit 1; }
+      ready=0
+      for attempt in $(seq 1 30); do
+        if celld d1 migrations apply openseo-standalone /config/app; then ready=1; break; fi
+        sleep 2
+      done
+      [ "$ready" = 1 ] || { echo 'Database migrations did not apply' >&2; exit 1; }
+      curl -fsS -X POST http://127.0.0.1:8081/reload >/dev/null
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -fsS
+        - http://localhost:8080/api/health
+      interval: 10s
+      timeout: 5s
+      start_period: 120s
+      retries: 5
+
+  # 爬虫网关：从 /config 读取初始化产物，为站点审计提供受控抓取通道。
+  crawl-gateway:
+    # ghcr.io/every-app/open-seo-standalone:0.1.31
+    image: ghcr.1ms.run/every-app/open-seo-standalone:0.1.31
+    command: node /opt/standalone/crawl-gateway.mjs
+    environment:
+      - CELLD_BUCKET=openseo
+      - S3_ENDPOINT=http://storage:9000
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID={{ stable_secret "openseo_storage_access_key" }}
+      - AWS_SECRET_ACCESS_KEY={{ stable_secret "openseo_storage_secret_key" }}
+      - AUTH_MODE=password
+      - BETTER_AUTH_URL=https://open-seo.{{ .S.AppDomain }}
+      - DATAFORSEO_API_KEY={{ .U.dataforseo_api_key }}
+      - TREG_API_TOKEN={{ .U.treg_api_token }}
+      - OPENROUTER_API_KEY={{ .U.openrouter_api_key }}
+      - OPENROUTER_BASE_URL={{ .U.openrouter_base_url }}
+      - OPENROUTER_MODEL={{ .U.openrouter_model }}
+      - GOOGLE_CLIENT_ID={{ .U.google_client_id }}
+      - GOOGLE_CLIENT_SECRET={{ .U.google_client_secret }}
+      - CONTEXT_API_KEY={{ .U.context_api_key }}
+      - GOOGLE_MAPS_API_KEY={{ .U.google_maps_api_key }}
+      - CRAWLER_ACCESS_SECRET={{ .U.crawler_access_secret }}
+    binds:
+      - /lzcapp/var/config:/config:ro
+    depends_on:
+      - runtime
+
+usage: |
+  OpenSEO 是 Semrush / Ahrefs 的开源替代：关键词研究、外链分析、排名追踪、
+  站点审计与 AI SEO 分析。
+  首次打开会引导创建管理员账号（注册在管理员创建后自动关闭，团队成员通过邀请链接加入）。
+  AI 分析与 SEO 数据需要自备 API Key：DataForSEO（或 treg token）提供关键词/外链/排名数据，
+  OpenRouter 提供 AI 摘要与对话；均可在部署参数中填写，也可后续在应用设置里配置。
+  Google Search Console / Analytics 集成需要自己的 Google OAuth 应用。
+  MCP 客户端连接 /mcp，用 OpenSEO 账号或设置里生成的 API Key 登录。
+  全部数据保存在应用数据目录中，重启不丢失。

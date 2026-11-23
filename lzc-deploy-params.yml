@@ -1,0 +1,103 @@
+params:
+  - id: dataforseo_api_key
+    type: string
+    name: "DataForSEO API Key"
+    description: "Base64-encoded login:password for keyword, backlink, rank and site data. Leave empty to configure later in app settings."
+    optional: true
+    default_value: ""
+
+  - id: treg_api_token
+    type: string
+    name: "treg API Token"
+    description: "Optional alternative to DataForSEO: the same data bought per call through treg.to."
+    optional: true
+    default_value: ""
+
+  - id: openrouter_api_key
+    type: string
+    name: "OpenRouter API Key"
+    description: "For SAM conversations, website research and AI summaries. Leave empty to configure later in app settings."
+    optional: true
+    default_value: ""
+
+  - id: openrouter_base_url
+    type: string
+    name: "OpenRouter Base URL"
+    description: "Optional base URL of another OpenAI-compatible server (vLLM, LiteLLM, Ollama). Leave empty for OpenRouter."
+    optional: true
+    default_value: ""
+
+  - id: openrouter_model
+    type: string
+    name: "OpenRouter Model"
+    description: "Optional model override for the configured provider."
+    optional: true
+    default_value: ""
+
+  - id: google_client_id
+    type: string
+    name: "Google OAuth Client ID"
+    description: "Optional, for Search Console and Analytics linking with your own Google OAuth app."
+    optional: true
+    default_value: ""
+
+  - id: google_client_secret
+    type: secret
+    name: "Google OAuth Client Secret"
+    description: "Optional, paired with the Google OAuth Client ID."
+    optional: true
+    default_value: ""
+
+  - id: context_api_key
+    type: string
+    name: "Context API Key"
+    description: "Optional JavaScript rendering for site audits."
+    optional: true
+    default_value: ""
+
+  - id: google_maps_api_key
+    type: string
+    name: "Google Maps API Key"
+    description: "Optional map for Local SEO."
+    optional: true
+    default_value: ""
+
+  - id: crawler_access_secret
+    type: secret
+    name: "Crawler Access Secret"
+    description: "Optional, at least 32 random characters. Encrypts saved Shopify crawler signatures for site audits."
+    optional: true
+    default_value: ""
+
+locales:
+  zh:
+    dataforseo_api_key:
+      name: "DataForSEO API Key"
+      description: "Base64 编码的 login:password，用于关键词、外链、排名与站点数据。可留空，后续在应用设置中配置。"
+    treg_api_token:
+      name: "treg API Token"
+      description: "可选，DataForSEO 的替代：通过 treg.to 按次购买同样的数据。"
+    openrouter_api_key:
+      name: "OpenRouter API Key"
+      description: "用于 AI 对话、网站研究与摘要。可留空，后续在应用设置中配置。"
+    openrouter_base_url:
+      name: "OpenRouter Base URL"
+      description: "可选，其他 OpenAI 兼容服务地址（vLLM、LiteLLM、Ollama）。留空使用 OpenRouter。"
+    openrouter_model:
+      name: "OpenRouter 模型"
+      description: "可选，覆盖默认使用的模型。"
+    google_client_id:
+      name: "Google OAuth Client ID"
+      description: "可选，用于关联 Search Console 与 Analytics。"
+    google_client_secret:
+      name: "Google OAuth Client Secret"
+      description: "可选，与上面的 Client ID 配对。"
+    context_api_key:
+      name: "Context API Key"
+      description: "可选，站点审计的 JavaScript 渲染。"
+    google_maps_api_key:
+      name: "Google Maps API Key"
+      description: "可选，本地 SEO 的地图功能。"
+    crawler_access_secret:
+      name: "爬虫访问密钥"
+      description: "可选，至少 32 位随机字符，用于加密保存的 Shopify 爬虫签名。"
