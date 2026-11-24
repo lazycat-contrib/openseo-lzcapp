@@ -1,12 +1,11 @@
 package: community.lazycat.app.open-seo
-version: 0.1.31
+version: 0.1.32
 name: OpenSEO
 description: "Open source alternative to Semrush and Ahrefs: keyword research, backlinks, rank tracking, site audits, and AI-powered SEO analysis. Self-hosted."
 min_os_version: 1.5.0
 author: every-app
 license: MIT
 homepage: https://github.com/every-app/open-seo
-
 locales:
   zh:
     name: "OpenSEO"

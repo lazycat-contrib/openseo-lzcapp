@@ -29,8 +29,8 @@ services:
   # 应用部署、数据库迁移）合并进 setup_script，在应用启动前完成。
   runtime:
     # ghcr.io/every-app/open-seo-standalone:0.1.31
-    # upstream: ghcr.io/every-app/open-seo-standalone:v0.1.31
-    image: ghcr.1ms.run/every-app/open-seo-standalone:v0.1.31
+    # upstream: ghcr.io/every-app/open-seo-standalone:v0.1.32
+    image: ghcr.1ms.run/every-app/open-seo-standalone:v0.1.32
     environment:
       - CELLD_BUCKET=openseo
       - S3_ENDPOINT=http://storage:9000
@@ -99,8 +99,8 @@ services:
   # 爬虫网关：从 /config 读取初始化产物，为站点审计提供受控抓取通道。
   crawl-gateway:
     # ghcr.io/every-app/open-seo-standalone:0.1.31
-    # upstream: ghcr.io/every-app/open-seo-standalone:v0.1.31
-    image: ghcr.1ms.run/every-app/open-seo-standalone:v0.1.31
+    # upstream: ghcr.io/every-app/open-seo-standalone:v0.1.32
+    image: ghcr.1ms.run/every-app/open-seo-standalone:v0.1.32
     command: node /opt/standalone/crawl-gateway.mjs
     environment:
       - CELLD_BUCKET=openseo
